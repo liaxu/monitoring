@@ -1,0 +1,7 @@
+DECLARE @dateTime FLOAT = 
+CONVERT(FLOAT,CAST(SUBSTRING(CONVERT(nvarchar(100),GETDATE()-1,121),1,10)+' 00:00:00' AS DATETIME))*1000*60*60*24+59926608000000;
+
+SELECT [URL], [PV], [UV], [ResponseTime] as [ResponseTime(ms)], [PV-4XX], [PV-5XX]
+FROM [dbo].[PageViewPerDayForDev]
+WHERE [DateTime]=@dateTime
+ORDER BY [PV] DESC

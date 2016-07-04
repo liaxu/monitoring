@@ -1,0 +1,10 @@
+DECLARE @startTime FLOAT = 
+CONVERT(FLOAT,CAST(SUBSTRING(CONVERT(nvarchar(100),GETDATE()-30,121),1,10)+' 00:00:00' AS DATETIME))*1000*60*60*24+59926608000000;
+
+SELECT CAST(([DateTime]-59926608000000)/1000/60/60/24 AS SMALLDATETIME) AS 'DateTime'
+      ,[PV]
+      ,[UV]
+      ,[ResponseTime] AS [ResponseTime(ms)]
+  FROM [dbo].[UVandPVPerHourForDev]
+  WHERE [DateTime]>=@startTime
+  ORDER BY [DateTime]

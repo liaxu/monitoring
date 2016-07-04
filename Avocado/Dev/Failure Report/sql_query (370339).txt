@@ -1,0 +1,19 @@
+SELECT [WebTestName], [ApplicationInsightName],
+	MIN(case [Location] when 'AU : Sydney' then [AlertTime] end) as 'AU : Sydney',
+	MIN(case [Location] when 'CH : Zurich' then [AlertTime] end) as 'CH : Zurich',
+	MIN(case [Location] when 'IE : Dublin' then [AlertTime] end) as 'IE : Dublin',
+	MIN(case [Location] when 'JP : Kawaguchi' then [AlertTime] end) as 'JP : Kawaguchi',
+	MIN(case [Location] when 'RU : Moscow' then [AlertTime] end) as 'RU : Moscow',
+	MIN(case [Location] when 'US : TX-San Antonio' then [AlertTime] end) as 'US : TX-San Antonio',
+	MIN(case [Location] when 'US : VA-Ashburn' then [AlertTime] end) as 'US : VA-Ashburn',
+	MIN(case [Location] when 'FR : Paris' then [AlertTime] end) as 'FR : Paris',
+  MIN(case [Location] when 'HK : Hong Kong' then [AlertTime] end) as 'HK : Hong Kong'
+FROM
+(
+		SELECT [IncidentsForDev].[WebTestName], [Location], [IncidentsForDev].[ApplicationInsightName],          
+			CAST(([AlertTime]-59926608000000)/1000/60/60/24 AS DATETIME) AS 'AlertTime'
+		FROM [dbo].[IncidentsForDev]
+		WHERE  
+			DependServiceId is not null and HealthTime is null
+) AS Temp
+GROUP BY [WebTestName], [ApplicationInsightName]

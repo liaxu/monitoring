@@ -1,0 +1,41 @@
+<div class='nav navbar-fixed-top navbar-default' data-product="Marketing">
+<div id="component-1463111568930"></div>
+</div>
+<script>
+/* loadLayoutComponent parameters: (selector, component-id) */
+avo.api.layout.loadLayoutComponent("#component-1463111568930", "706");
+</script>
+<div class="report-header"></div>
+<div class="report-content"></div>
+
+<script>
+/* Create and render the header view */
+var header = new avo.api.layout.Header({ report: report });
+$('.report-header').html(header.render().el);
+
+/* API call to fetch results */
+avo.api.data.fetchData({
+  
+  success: function(data) {    
+        var d = new Date();
+        report.templates[363689].name=d.toDateString();
+        d.setDate(d.getDate() - 1);
+        report.templates[363692].name=d.toDateString();
+        d.setDate(d.getDate() - 1);
+        report.templates[370365].name=d.toDateString();
+        d.setDate(d.getDate() - 1);
+        report.templates[370366].name=d.toDateString();
+        d.setDate(d.getDate() - 1);
+        report.templates[370367].name=d.toDateString();
+        d.setDate(d.getDate() - 1);
+        report.templates[370368].name=d.toDateString();
+        d.setDate(d.getDate() - 1);
+        report.templates[363693].name=d.toDateString();
+    /* Create and render the default tabbed view */
+    var tabbedView = new avo.api.layout.TabbedView({ report: report, data: data });
+    $('.report-content').html(tabbedView.render().el);
+        $('.chart-container').hide();
+  }
+  
+});
+</script>

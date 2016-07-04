@@ -1,0 +1,7 @@
+DECLARE @dateTime FLOAT = 
+CONVERT(FLOAT,CAST(SUBSTRING(CONVERT(nvarchar(100),GETDATE(),121),1,10)+' 00:00:00' AS DATETIME))*1000*60*60*24+59926608000000;
+
+SELECT TOP 10 [IP], [PV], [ResponseTime] AS [ResponseTime(ms)]
+FROM [dbo].[LocationViewPerDayForGraph]
+WHERE [DateTime]=@dateTime
+ORDER BY [PV] DESC

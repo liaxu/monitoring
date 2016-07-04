@@ -1,0 +1,246 @@
+<div class='nav navbar-fixed-top navbar-default' data-product="Marketing">
+<div id="component-1463111568930"></div>
+</div>
+<script>
+/* loadLayoutComponent parameters: (selector, component-id) */
+avo.api.layout.loadLayoutComponent("#component-1463111568930", "706");
+</script>
+
+
+<div class="report-header">
+</div>
+<div style="margin-left:35px;"><span style="color:#666666">* UV is unique IP address</span></div>
+<div style="margin-left:35px;"><span style="color:#666666">* PV is page view</span></div>
+<div class="report-content">
+  <div class="metric-container">
+    <div class="button-container pull-right">
+        <span id="button-container">          
+          <button class="btn-switch btn btn-default " data-title='Per Hour For HomePage' data-query-tab-id=363686 data-metric='responseTime'>Per Hour</button>
+          <button class="btn-switch btn btn-default btn-primary btn-daily" data-title='Per Day For HomePage' data-query-tab-id=363687 data-metric='responseTime'>Per Day</button>
+          <div class="btn-switch btn btn-default download-responseTime" style="display:none;"></div> 
+        </span>
+    </div>
+    <div class="chart-responseTime"> 
+    </div> 
+    <div id="pvPerIp"> </div>
+  </div>
+  <br>
+</div>
+
+<script>
+  function showSubnav(el) {
+    var old_section = $(".active-subnav").parent().parent();
+    var new_section = $(el).parent().parent();
+
+    $(".active-subnav").removeClass("active-subnav");
+    $(el).addClass("active-subnav");
+    $(".active").removeClass("active");
+
+    if (!old_section.is(new_section)) {
+      old_section.hide(400);
+      new_section.show(400);
+    }
+  };
+
+  var header = new avo.api.layout.Header({
+    report: report
+  });
+  
+$('.report-header').html(header.render().el);
+
+$(document).ready(function(){
+  $("#report-title").html(report.name);
+  
+  avo.api.data.fetchData({
+        success: function(data) { 
+          $('.button-container').on('click', 'button', function(event){
+            event.preventDefault();
+          
+            var query_tab_id = $(this).data('queryTabId');
+            var title = $(this).data('title');
+            var metric = $(this).data('metric');
+            var time_period = $(this).text();
+            
+            // Change button color when clicked
+            $(this).parent().children().removeClass("btn-primary");
+            $(this).addClass("btn-primary");
+            var linkData = data[query_tab_id];
+            console.log(data);
+            renderStockChartVerticalLegend( $('.metric-container').children('.chart-' + metric)[0], metric, data, query_tab_id);
+                      
+        });
+        $(".btn-daily").click();
+
+        $('#pvPerIp').append('<hr/>');
+        $('#pvPerIp').append('<div style="font-size:16px;  color:rgb(0,0,0); width:100%; text-align:center; font-family: \'Lucida Grande\', \'Lucida Sans Unicode\', Arial, Helvetica, sans-serif;">Top 10 PV</div>');
+        var d = new Date();
+        report.query_tab_ids = [371560, 371573, 371574, 371575, 371576, 371577,371578];
+        report.templates[371560].name=d.toDateString();
+        d.setDate(d.getDate() - 1);
+        report.templates[371573].name=d.toDateString();
+        d.setDate(d.getDate() - 1);
+        report.templates[371574].name=d.toDateString();
+        d.setDate(d.getDate() - 1);
+        report.templates[371575].name=d.toDateString();
+        d.setDate(d.getDate() - 1);
+        report.templates[371576].name=d.toDateString();
+        d.setDate(d.getDate() - 1);
+        report.templates[371577].name=d.toDateString();
+        d.setDate(d.getDate() - 1);
+        report.templates[371578].name=d.toDateString();
+        var tabbedView = new avo.api.layout.TabbedView({ report: report, data: data });
+        $('#pvPerIp').append(tabbedView.render().el);         
+        $('#pvPerIp').find('.chart-container').hide();
+      }
+  });
+});
+
+function renderStockChartVerticalLegend(renderToEle,metric, data,query_tab_id)
+{
+        var data_cleaned = [];
+        var is_data_float = false;
+        var columns = data[query_tab_id].columns.filter(function(d) {
+          return d != 'DateTime' && d!='PassedCount'&& d!='FailedCount'&& d!='Passed'&& d!='Failed';
+        });
+        for (column_index in columns) {
+          var column = columns[column_index];
+  
+          
+          var new_series = data[query_tab_id].data.map(function(d) {
+            if(column == "All Locations")
+            {
+              return {                
+                x: new Date(d.DateTime).valueOf(),
+                y: d[column],
+                color:d.FailedCount <= 0?'#00FF00':'#FF0000'
+              };
+            }
+            else 
+            {
+                return {     
+                x: new Date(d.DateTime).valueOf(),
+                y: d[column]
+              };
+            }
+          });    
+    
+          // If any data is of type float, show three significant digits
+          if (data[query_tab_id].type_map[column] == 'float') is_data_float = true;
+          if(column == "All Locations")
+          {
+              data_cleaned.push({
+                type:'column',
+                name: column,
+                data: new_series,
+                tooltip: {
+                  valueDecimals: is_data_float ? 4 : 0
+                } 
+              });
+          }          
+          else
+          {
+            data_cleaned.push({             
+                type:'spline',
+                name: column,
+                data: new_series,
+                tooltip: {
+                  valueDecimals: is_data_float ? 4 : 0
+                }
+              });
+          }
+          
+        }     
+        
+        var rangeSelectorVar;
+        if(query_tab_id==363687)
+        {
+          rangeSelectorVar= {
+            allButtonsEnabled: true,
+            buttons: 
+            [ 
+            {
+              type: 'day',
+              count: 7,
+              text: '1w'
+            },
+            {
+              type: 'month',
+              count: 1,
+              text: '1m'
+            },
+            {
+              type: 'month',
+              count: 3,
+              text: '3m'
+            },
+            {
+              type: 'month',
+              count: 6,
+              text: '6m'
+            },
+            {
+              type: 'year',
+              count: 1,
+              text: '1y'
+            },
+            {
+              type: 'all',
+              text: 'All'
+            }], 
+            selected: 1 
+          };
+        }
+        else
+        {
+          rangeSelectorVar = {
+            allButtonsEnabled: true,
+            buttons: 
+            [
+            {
+              type: 'hour',
+              count: 24,
+              text: '1d'
+            },  
+            {
+              type: 'hour',
+              count: 168,
+              text: '1w'
+            }], 
+            selected: 0 
+          };
+        }
+        // Global variable 'report' used here for template names and determining chart type
+        var chart_title = report.templates[query_tab_id].name.replace(/^line\s/, '').replace(/^column\s/, '');
+        var chart_type = report.templates[query_tab_id].name.split(' ')[0] || 'column';
+        var linkData = data[query_tab_id];  
+        var csvdwn = new avo.views.reports.CsvDownloadView({model: {downloadLink:linkData.download_link}, text: 'Download CVS'});    
+        $('.download-' + metric).html(csvdwn.render().el);
+        $('.download-' + metric).show();
+        // Render chart
+        var chart = new Highcharts.StockChart({
+          chart: {
+            renderTo: renderToEle,
+          },
+          navigator: {
+            enabled: true
+          },
+          rangeSelector: rangeSelectorVar,    
+          title: { text: chart_title,
+            useHTML:true,
+            style: {
+                  fontSize: '16px'
+          }},
+          series: data_cleaned,
+          yAxis: {
+            opposite: false,
+            min: 0
+          },
+          legend: {
+            enabled: (data_cleaned.length > 1 ? true: false),
+            borderWidth: 0,
+            align: 'center',
+            verticalAlign: 'bottom',
+          }
+        });
+}
+</script>

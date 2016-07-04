@@ -1,0 +1,31 @@
+DECLARE @startTime FLOAT = 
+CONVERT(FLOAT,CAST(SUBSTRING(CONVERT(nvarchar(100),GETDATE()-30,121),1,10)+' 00:00:00' AS DATETIME))*1000*60*60*24+59926608000000;
+
+
+
+SELECT CAST(([DateTime]-59926608000000)/1000/60/60/24 AS SMALLDATETIME) AS 'DateTime',
+  SUM([FailedCount]) AS 'FailedCount',    
+  SUM([PassedCount]) AS 'PassedCount',
+  AVG([ResponseTime(s)]) as 'All Locations',
+  SUM(case [Location] when 'AU : Sydney' then [ResponseTime(s)] else 0 end) as 'AU : Sydney',
+  SUM(case [Location] when 'CH : Zurich' then [ResponseTime(s)] else 0 end) as 'CH : Zurich',
+  SUM(case [Location] when 'FR : Paris' then [ResponseTime(s)] else 0 end) as 'FR : Paris',
+  SUM(case [Location] when 'IE : Dublin' then [ResponseTime(s)] else 0 end) as 'IE : Dublin',
+  SUM(case [Location] when 'JP : Kawaguchi' then [ResponseTime(s)] else 0 end) as 'JP : Kawaguchi',
+  SUM(case [Location] when 'RU : Moscow' then [ResponseTime(s)] else 0 end) as 'RU : Moscow',
+  SUM(case [Location] when 'US : TX-San Antonio' then [ResponseTime(s)] else 0 end) as 'US : TX-San Antonio',
+  SUM(case [Location] when 'US : VA-Ashburn' then [ResponseTime(s)] else 0 end) as 'US : VA-Ashburn',
+  SUM(case [Location] when 'HK : Hong Kong' then [ResponseTime(s)] else 0 end) as 'HK : Hong Kong'
+FROM
+(
+	SELECT [DateTime], 
+                     AVG([ResponseTime(s)]) as 'ResponseTime(s)',	
+                     [Location], 
+	SUM([FailedCount]) as [FailedCount],
+	SUM([PassedCount]) as [PassedCount]
+	FROM [dbo].[ResponsePerHourForGraph]
+	WHERE [DateTime]>=@startTime
+	GROUP BY [DateTime],[Location]
+) AS TEMP
+GROUP BY [DateTime]
+ORDER BY [DateTime]

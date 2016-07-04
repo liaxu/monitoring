@@ -1,0 +1,279 @@
+<div class='nav navbar-fixed-top navbar-default' data-product="Marketing">
+<div id="component-1463111568930"></div>
+</div>
+<script>
+/* loadLayoutComponent parameters: (selector, component-id) */
+avo.api.layout.loadLayoutComponent("#component-1463111568930", "706");
+</script>
+
+<style>
+  ul.my-nav li {padding: 0; display: block;white-space:nowrap;}
+  ul.my-nav li > a {
+    padding: 10px 15px; 
+    display: block; 
+    color: gray; 
+    border-radius: 3px;
+    white-space:nowrap;
+  }
+  ul.my-nav li > a:hover {
+    background-color: rgba(0, 174, 239, 1);
+    color: white;
+    cursor: pointer;
+    white-space:nowrap;
+  }
+  ul.subnav li > a {
+    padding-left: 25px;
+    white-space:nowrap;
+  }
+  .nav-container {
+    width: 300px;
+  }
+  
+  .active-subnav, .active-subnav:hover, .active, .active:hover {
+    background-color: rgba(0, 113, 188, 1);
+    cursor: default;
+  }
+  
+  ul.my-nav li > a.active-subnav:hover, ul.my-nav li > a.active-subnav, ul.my-nav li > a.active, ul.my-nav li > a.active-hover {
+    color: #e1e0df; 
+  }
+
+  .chart {
+    margin: 5px 5px 5px 5px;  
+  }
+  
+  #core-deck-container {
+    margin: 10px 0px 0px 0px;  
+    color: #505050;
+  }
+  
+  .highcharts-container {
+    margin-bottom: 5px;
+  }
+</style>
+<div class="report-header">
+</div>
+<div class="report-content">
+  
+  <div class="metric-container">
+    <div class="button-container pull-right">
+        <span id="button-container">          
+          <button class="btn-switch btn btn-default " data-title='Per Hour For HomePage' data-query-tab-id=363628 data-metric='responseTime'>Per Hour</button>
+          <button class="btn-switch btn btn-default btn-primary btn-daily" data-title='Per Day For HomePage' data-query-tab-id=363630 data-metric='responseTime'>Per Day</button>
+          <div class="btn-switch btn btn-default download-responseTime" style="display:none;"></div> 
+        </span>
+    </div>
+    <div class="chart-responseTime"> 
+    </div>  
+  </div>
+  <br>
+  <hr/>
+  <div class="metric-container">
+    <div class="button-container pull-right">
+        <span id="button-container">
+          <button class="btn-switch btn btn-default " data-title='Per Hour For Site' data-query-tab-id=363629 data-metric='uvandpv'>Per Hour</button>
+          <button class="btn-switch btn btn-default btn-primary btn-daily" data-title='Per Day For Site' data-query-tab-id=363631  data-metric='uvandpv'>Per Day</button>
+          <div class="btn-switch btn btn-default download-uvandpv" style="display:none;"></div> 
+        </span>        
+    </div>
+    <div class="chart-uvandpv">
+    </div>  
+  </div> 
+ <br>
+</div>
+
+<script>
+  function showSubnav(el) {
+    var old_section = $(".active-subnav").parent().parent();
+    var new_section = $(el).parent().parent();
+
+    $(".active-subnav").removeClass("active-subnav");
+    $(el).addClass("active-subnav");
+    $(".active").removeClass("active");
+
+    if (!old_section.is(new_section)) {
+      old_section.hide(400);
+      new_section.show(400);
+    }
+  };
+
+  var header = new avo.api.layout.Header({
+    report: report
+  });
+  
+$('.report-header').html(header.render().el);
+
+$(document).ready(function(){
+  $("#report-title").html(report.name);
+  
+  avo.api.data.fetchData({
+        success: function(data) {           
+          $('.button-container').on('click', 'button', function(event){
+            event.preventDefault();
+          
+            var query_tab_id = $(this).data('queryTabId');
+            var title = $(this).data('title');
+            var metric = $(this).data('metric');
+            var time_period = $(this).text();
+            
+            // Change button color when clicked
+            $(this).parent().children().removeClass("btn-primary");
+            $(this).addClass("btn-primary");
+            var linkData = data[query_tab_id];
+            console.log(data);
+            renderStockChartVerticalLegend( $('.metric-container').children('.chart-' + metric)[0], metric, data, query_tab_id);
+                      
+        });
+        $(".btn-daily").click();
+      }
+  });
+});
+
+function renderStockChartVerticalLegend(renderToEle,metric, data,query_tab_id)
+{
+        var data_cleaned = [];
+        var is_data_float = false;
+        var columns = data[query_tab_id].columns.filter(function(d) {
+          return d != 'DateTime' && d!='PassedCount'&& d!='FailedCount'&& d!='Passed'&& d!='Failed';
+        });
+        for (column_index in columns) {
+          var column = columns[column_index];
+  
+          
+          var new_series = data[query_tab_id].data.map(function(d) {
+            if(column == "All Locations")
+            {
+              return {                
+                x: new Date(d.DateTime).valueOf(),
+                y: d[column],
+                color:d.FailedCount <= 0?'#00FF00':'#FF0000'
+              };
+            }
+            else 
+            {
+                return {     
+                x: new Date(d.DateTime).valueOf(),
+                y: d[column]
+              };
+            }
+          });
+    
+          if(column == "All Locations")
+          {
+              data_cleaned.push({
+                type:'column',
+                name: column,
+                data: new_series
+              });
+          }          
+          else
+          {
+            data_cleaned.push({             
+                type:'spline',
+                name: column,
+                data: new_series
+              });
+          }
+          
+          // If any data is of type float, show three significant digits
+          if (data[query_tab_id].type_map[column] == 'float') is_data_float = true;
+        }     
+        
+        var rangeSelectorVar;
+        if(query_tab_id==363630||query_tab_id==363631)
+        {
+          rangeSelectorVar= {
+            allButtonsEnabled: true,
+            buttons: 
+            [ 
+            {
+              type: 'day',
+              count: 7,
+              text: '1w'
+            },
+            {
+              type: 'month',
+              count: 1,
+              text: '1m'
+            },
+            {
+              type: 'month',
+              count: 3,
+              text: '3m'
+            },
+            {
+              type: 'month',
+              count: 6,
+              text: '6m'
+            },
+            {
+              type: 'year',
+              count: 1,
+              text: '1y'
+            },
+            {
+              type: 'all',
+              text: 'All'
+            }], 
+            selected: 1 
+          };
+        }
+        else
+        {
+          rangeSelectorVar = {
+            allButtonsEnabled: true,
+            buttons: 
+            [
+            {
+              type: 'hour',
+              count: 24,
+              text: '1d'
+            },  
+            {
+              type: 'hour',
+              count: 168,
+              text: '1w'
+            }], 
+            selected: 0 
+          };
+        }
+        // Global variable 'report' used here for template names and determining chart type
+        var chart_title = report.templates[query_tab_id].name.replace(/^line\s/, '').replace(/^column\s/, '');
+        var chart_type = report.templates[query_tab_id].name.split(' ')[0] || 'column';
+        var linkData = data[query_tab_id];  
+        var csvdwn = new avo.views.reports.CsvDownloadView({model: {downloadLink:linkData.download_link}, text: 'Download CVS'});    
+        $('.download-' + metric).html(csvdwn.render().el);
+        $('.download-' + metric).show();
+        // Render chart
+        var chart = new Highcharts.StockChart({
+          chart: {
+            renderTo: renderToEle,
+          },
+          navigator: {
+            enabled: true
+          },
+          rangeSelector: rangeSelectorVar,
+          tooltip: {
+            valueDecimals: is_data_float ? 4 : 0
+          },          
+          
+          title: { text: chart_title,
+            useHTML:true,
+            style: {
+                  fontSize: '16px'
+          }},
+          series: data_cleaned,
+          yAxis: {
+            opposite: false,
+            min: 0,
+            labels:{format: '{value} s'}
+          },
+          legend: {
+            enabled: (data_cleaned.length > 1 ? true: false),
+            borderWidth: 0,
+            align: 'center',
+            verticalAlign: 'bottom',
+          }
+        });
+}
+</script>

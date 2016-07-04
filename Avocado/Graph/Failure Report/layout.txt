@@ -1,0 +1,182 @@
+<div class='nav navbar-fixed-top navbar-default' data-product="Marketing">
+<div id="component-1463111568930"></div>
+</div>
+<script>
+/* loadLayoutComponent parameters: (selector, component-id) */
+avo.api.layout.loadLayoutComponent("#component-1463111568930", "706");
+</script>
+<!-- Dev office & graph dashboard header layout component end -->
+<div class="report-header">
+</div>
+
+<div class="report-content">
+    <div class="btn-switch btn btn-default downloadcvs" style="display:none;"></div> 
+    <div id="container"></div>
+</div>
+<div class="report-content">
+    <div id="unfix"></div>
+</div>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script>
+var failureServiceArray = [];
+
+var colors = [];
+
+function parserFailureServiceList(data){  
+  colors[1]='#006000';//Green Internal
+  colors[2]='#000000';//Black//Dev Account Sign In
+  colors[3]='#000000';//Black//Dev Account Sign Up
+  colors[4]='#000000';//Black//App Reg API-Create
+  colors[5]='#FF0000';//Red //Internal-AppRegistration
+  colors[6]='#000000';//Black//youtu.be
+  colors[7]='#000000';//Black//Graph API Explorer
+  colors[8]='#000000';//Black//App Registration Portal
+  colors[9]='#000000';//Black//s7.addthis.com
+  colors[10]='#006000';//Green //apiexproxy.azurewebsites.net
+  colors[11]='#8600FF';//Zi//github.com
+  colors[12]='#FF00FF';//Pink//msdn.microsoft.com
+  colors[13]='#000000';//Black//www.napacloudapp.com
+  colors[14]='#000000';//Black//dev.onedrive.com
+  colors[15]='#000000';//Black//dev.onenote.com
+  colors[16]='#000000';//Black//dev.outlook.com
+  colors[17]='#0000C6';//Blue //skype.com/en-us/developers
+  colors[18]='#F75000';//Orange //dev.yammer.com
+  colors[19]='#000000';//Black//graphexplorer2.azurewebsites.net
+  colors[20]='#000000';//Black//www.nuget.org
+
+  
+  
+  for(var i=0;i<data.data.length;i++){
+    var dependServiceName=data.data[i].DependServiceName;
+    var webTestName=data.data[i].WebTestName;
+    var applicationInsightName=data.data[i].ApplicationInsightName;
+    var alertMessage=data.data[i].AlertMessage;
+    var healthTime=data.data[i].HealthTime2;
+    var alertTime=data.data[i].AlertTime2;
+    var location=data.data[i].Location;
+    var duration=data.data[i].Duration;
+ 
+    failureServiceArray[data.data[i].Id]={dependServiceName, webTestName, healthTime, location, alertTime, duration};
+  }
+}
+
+/* Create and render the header view */
+var header = new avo.api.layout.Header({ report: report });
+$('.report-header').html(header.render().el);
+
+/* API call to fetch results */
+avo.api.data.fetchData({
+  
+  success: function(data) {
+        // unfixed case
+        if(data[370361].data.length>0)
+        {
+          var table = new avo.api.layout.Table({data: data[370339],options: {pageSize: 20}});
+
+          $('#unfix').html(table.render().el);
+        }
+        else
+        {
+          $('#unfix').html("There is no unfixed failure cases until last hour.");
+        }
+   
+        //parserFailureServiceList(data[368285]);
+        var data_cleaned = [];
+        var is_data_float = false;
+        var columns = data[368286].columns.filter(function(d) {
+          return d != ('Id' || 'WebTestName' || 'ApplicationInsightName' || 'AlertMessage' || 'Location' || 'AlertTime2' || 'HealthTime2');
+        });
+        for (column_index in columns) {
+          var column = columns[column_index];
+          
+          if(column=='Id' || column=='WebTestName' || column=='ApplicationInsightName' || column=='AlertMessage' || column=='Location' || column=='AlertTime2' || column=='HealthTime2')
+            continue;
+          
+          var new_series = [];          
+          data[368286].data.forEach(function(d) {
+            if(d[column]!=0)
+            {
+              var element = {     
+                x: new Date(d.AlertTime2).valueOf(),
+                y: d[column],
+                services:d
+              };
+              new_series.push(element);
+            }
+          });
+    
+          if(new_series.length>0)
+          {
+            data_cleaned.push({
+                  //color: colors[column_index],
+                  name: column,
+                  data: new_series
+            });
+          }
+          
+          // If any data is of type float, show three significant digits
+          if (data[368286].type_map[column] == 'float') is_data_float = true;
+        }     
+        
+    var csvdwn = new avo.views.reports.CsvDownloadView({model: {downloadLink: data[368286].download_link}, text: ''});   
+    $('.downloadcvs').html(csvdwn.render().el);
+    $('.downloadcvs').show();
+    $('#container').highcharts({
+        chart: {
+            type: 'scatter',
+            zoomType: 'xy'
+        },
+        title: {
+            text: 'Graph Failure Status'
+        },
+                  tooltip: {
+                  shared: true,
+                  useHTML: true,
+                  headerFormat: '<small>{point.key}</small><table style="width:500px;table-layout: fixed">',
+                  pointFormat: '<tr><td style="width:100px">Name:</td><td style="color: {series.color};width:400px">{series.name}: </td></tr>' +
+                  '<tr><td>duration(minute)</td><td style="width:400px"><b>{point.y} minutes</b></td></tr>'+
+                  '<tr><td>alert time:</td><td style="width:400px">{point.services.AlertTime2}</td></tr>'+
+                  '<tr><td>web test name:</td><td style="width:400px">{point.services.WebTestName}</td></tr>'+
+                  '<tr><td>location:</td><td style="width:400px">{point.services.Location}</td></tr>'+
+                  '<tr><td style="vertical-align:top;">alert message:</td><td style="width:400px;word-wrap:break-word;white-space:normal;">{point.services.AlertMessage}</td></tr>',
+                  footerFormat: '</table>',
+                  valueDecimals: 2
+                },
+                xAxis: {
+            type: 'datetime'
+        },
+        series: data_cleaned,
+        navigator: {
+            enabled: true
+          },
+        yAxis: {
+            opposite: false,
+            min: 0,
+            labels:{format: '{value} minutes'}
+        },
+        rangeSelector: {
+            allButtonsEnabled: true,
+            enabled:true,
+            buttons: 
+            [
+            {
+              type: 'hour',
+              count: 24,
+              text: '1d'
+            },  
+            {
+              type: 'hour',
+              count: 168,
+              text: '1w'
+            },
+            {
+              type: 'all',
+              text: 'All'
+            }], 
+            selected: 2  
+          }
+    });
+  }
+  
+});
+</script>
